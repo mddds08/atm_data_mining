@@ -1,0 +1,201 @@
+/* Custom styles */
+.bg-primary {
+  background-color: #007bff !important;
+}
+/* Custom styles */
+.navbar {
+  background-color: #f8f9fa;
+}
+
+.navbar-brand,
+.nav-link {
+  font-size: 1.1rem;
+}
+
+.nav-link {
+  padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+  background-color: #e2e6ea;
+  border-radius: 0.25rem;
+}
+
+.dropdown-menu {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:hover {
+  background-color: #e2e6ea;
+}
+
+.bg-primary {
+  background-color: #007bff !important;
+}
+
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.navbar-light .navbar-nav .nav-link:focus {
+  color: rgba(0, 0, 0, 0.7);
+}
+.card {
+  margin-top: 20px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  font-size: 1.25rem;
+  padding: 0.75rem 1.25rem;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.card {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-title {
+  margin-bottom: 1rem;
+}
+
+.card-text {
+  margin-bottom: 0;
+}
+.table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.table-bordered thead th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.table-bordered tbody td strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.footer {
+  background-color: #f8f9fa;
+  padding: 20px 0;
+}
+
+.footer .container {
+  max-width: 960px;
+}
+
+.footer h5 {
+  margin-bottom: 1rem;
+}
+
+.footer p {
+  margin-bottom: 0.5rem;
+}
+
+.footer .bg-dark {
+  background-color: #343a40 !important;
+  padding: 10px 0;
+}
+/* Flexbox layout to keep footer at the bottom */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+.card-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.card-text {
+  font-size: 1.1rem;
+}
+
+.card-text .font-weight-bold {
+  font-weight: bold;
+}
+
+.card-text i {
+  color: #007bff;
+  margin-right: 0.5rem;
+}
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.card {
+  margin-bottom: 2rem;
+  border-radius: 10px;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.card-title {
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.card-text {
+  color: #555;
+}
+/* Styles for decision tree */
+.link {
+  fill: none;
+  stroke: #555;
+  stroke-width: 2px;
+}
+
+.node circle {
+  fill: #999;
+  stroke: steelblue;
+  stroke-width: 3px;
+}
+
+.node text {
+  font: 12px sans-serif;
+}
+.header-logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  
+}
+.header-title {
+  display: flex;
+  align-items: center;
+}
