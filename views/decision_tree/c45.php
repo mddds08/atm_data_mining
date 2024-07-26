@@ -69,6 +69,14 @@ $tree = buildTree($decision_tree);
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Hasil Perhitungan Algoritma C4.5</h5>
+            <?php if (isset($_SESSION['message'])): ?>
+                <div class="alert alert-<?php echo $_SESSION['message_type']; ?>">
+                    <?php echo $_SESSION['message']; ?>
+                </div>
+                <?php unset($_SESSION['message']);
+                unset($_SESSION['message_type']); ?>
+            <?php endif; ?>
+
             <?php if (!empty($c45_results)): ?>
                 <table class="table table-bordered mt-3">
                     <thead class="thead-light">
@@ -83,17 +91,49 @@ $tree = buildTree($decision_tree);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($c45_results as $result): ?>
+                        <?php
+                        $last_attribute = '';
+                        $total_cases = $total_filled = $total_empty = 0;
+                        foreach ($c45_results as $result):
+                            $is_new_attribute = $result['attribute_name'] !== $last_attribute;
+                            if ($is_new_attribute && $last_attribute !== ''): ?>
+                                <tr class="font-weight-bold">
+                                    <td><?php echo htmlspecialchars($last_attribute); ?></td>
+                                    <td></td>
+                                    <td><?php echo $total_cases; ?></td>
+                                    <td><?php echo $total_filled; ?></td>
+                                    <td><?php echo $total_empty; ?></td>
+                                    <td></td>
+                                    <td><?php echo htmlspecialchars($result['gain']); ?></td>
+                                </tr>
+                                <?php
+                                $total_cases = $total_filled = $total_empty = 0;
+                            endif;
+                            $total_cases += $result['total_cases'];
+                            $total_filled += $result['filled_cases'];
+                            $total_empty += $result['empty_cases'];
+                            $last_attribute = $result['attribute_name'];
+                            ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($result['attribute_name']); ?></td>
+                                <td></td>
                                 <td><?php echo htmlspecialchars($result['attribute_value']); ?></td>
                                 <td><?php echo htmlspecialchars($result['total_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['filled_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['empty_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['entropy']); ?></td>
-                                <td><?php echo htmlspecialchars($result['gain']); ?></td>
+                                <td></td> <!-- Empty gain column for attribute values -->
                             </tr>
                         <?php endforeach; ?>
+                        <!-- Print the last attribute's total cases -->
+                        <tr class="font-weight-bold">
+                            <td><?php echo htmlspecialchars($last_attribute); ?></td>
+                            <td></td>
+                            <td><?php echo $total_cases; ?></td>
+                            <td><?php echo $total_filled; ?></td>
+                            <td><?php echo $total_empty; ?></td>
+                            <td></td>
+                            <td><?php echo htmlspecialchars($result['gain']); ?></td>
+                        </tr>
                     </tbody>
                 </table>
                 <?php
