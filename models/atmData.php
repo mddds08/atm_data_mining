@@ -31,14 +31,15 @@ class ATMData
     // cleanC45Results
     public function cleanC45Results()
     {
-        $query = "DELETE FROM c45_results";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
+        // Menghapus data dari decision_tree dalam urutan yang benar
+        $this->conn->exec("SET FOREIGN_KEY_CHECKS=0"); // Nonaktifkan pemeriksaan kunci asing sementara
+        $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NOT NULL"); // Hapus child nodes terlebih dahulu
+        $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NULL"); // Hapus parent nodes
+        $this->conn->exec("SET FOREIGN_KEY_CHECKS=1"); // Aktifkan kembali pemeriksaan kunci asing
 
-        $query = "DELETE FROM decision_tree";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-    }
+        // Hapus data dari c45_results
+        $this->conn->exec("DELETE FROM c45_results");
+    }   
 
     // Method to get all data
     public function getAllData()

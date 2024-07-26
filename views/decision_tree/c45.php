@@ -22,38 +22,47 @@ $stmt->execute();
 $decision_tree = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to build tree structure from flat data
-function buildTree($nodes, $parentId = null)
+function buildTree($flatData)
 {
-    $branch = [];
-    foreach ($nodes as $node) {
-        if ($node['parent_node_id'] == $parentId) {
-            $children = buildTree($nodes, $node['node_id']);
-            if ($children) {
-                $node['children'] = $children;
-            }
-            $branch[] = $node;
+    $tree = [];
+    $indexed = [];
+
+    foreach ($flatData as $item) {
+        $item['children'] = [];
+        $indexed[$item['node_id']] = $item;
+    }
+
+    foreach ($indexed as $item) {
+        if ($item['parent_node_id'] === null) {
+            $tree[] = &$indexed[$item['node_id']];
+        } else {
+            $indexed[$item['parent_node_id']]['children'][] = &$indexed[$item['node_id']];
         }
     }
-    return $branch;
+
+    return $tree;
 }
 
-// Function to render decision tree
-function renderTree($node, $indent = 0)
+// Function to render tree
+function renderTree($node)
 {
-    $indentation = str_repeat('&nbsp;', $indent * 4);
-    echo $indentation . "Attribute: " . htmlspecialchars($node['attribute_name']) . "<br>";
+    echo '<li>';
+    echo "<strong>Attribute:</strong> " . htmlspecialchars($node['attribute_name']);
     if ($node['is_leaf']) {
-        echo $indentation . "Class: " . htmlspecialchars($node['class_label']) . "<br>";
-    } else {
-        foreach ($node['children'] as $child) {
-            renderTree($child, $indent + 1);
-        }
+        echo " <strong>Class:</strong> " . htmlspecialchars($node['class_label']);
     }
+    if (!empty($node['children'])) {
+        echo '<ul>';
+        foreach ($node['children'] as $child) {
+            renderTree($child);
+        }
+        echo '</ul>';
+    }
+    echo '</li>';
 }
 
-// Build tree structure from flat data
-$decisionTreeRoot = buildTree($decision_tree);
-
+// Build tree structure
+$tree = buildTree($decision_tree);
 ?>
 
 <div class="container mt-5">
@@ -137,26 +146,51 @@ $decisionTreeRoot = buildTree($decision_tree);
                 </ul>
                 <br>
                 <h3>Pohon Keputusan</h3>
-                <div id="decision-tree" class="mt-3">
-                    <div id="decision-tree" class="mt-3">
-                        <?php
-                        // Render decision tree
-                        foreach ($decisionTreeRoot as $node) {
-                            renderTree($node);
+                <ul id="decision-tree" class="mt-3">
+                    <?php
+                    if (!empty($tree)) {
+                        foreach ($tree as $rootNode) {
+                            renderTree($rootNode);
                         }
-                        ?>
-                    </div>
-                    <form action="../../controllers/c45.php" method="post" class="mt-4">
-                        <input type="hidden" name="action" value="clean">
-                        <button type="submit" class="btn btn-danger">Bersihkan Hasil C4.5</button>
-                    </form>
-                <?php else: ?>
-                    <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
-                <?php endif; ?>
+                    }
+                    ?>
+                </ul>
+                <button class="btn btn-danger btn-lg btn-block" data-toggle="modal" data-target="#confirmDeleteModal" <?php if (empty($tree))
+                    echo 'disabled'; ?>>
+                    Bersihkan Hasil C4.5
+                </button>
 
-            </div>
+                <!-- Modal -->
+                <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog"
+                    aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmDeleteModalLabel">Konfirmasi Penghapusan</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                Apakah Anda yakin ingin menghapus semua data hasil C4.5?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                <form action="../../controllers/c45.php" method="post" class="d-inline">
+                                    <input type="hidden" name="action" value="clear_c45">
+                                    <button type="submit" class="btn btn-danger">Hapus</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
+            <?php endif; ?>
+
         </div>
     </div>
-    <?php
-    include __DIR__ . '/../partials/footer.php';
-    ?>
+</div>
+<?php
+include __DIR__ . '/../partials/footer.php';
+?>

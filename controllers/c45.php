@@ -12,6 +12,19 @@ $db = $database->getConnection();
 $atmData = new ATMData($db);
 $data = $atmData->getDataForC45();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && $_POST['action'] === 'clear_c45') {
+        // Clear C4.5 results
+        $atmData->cleanC45Results();
+        // Set session message
+        $_SESSION['message'] = "Hasil C4.5 telah dibersihkan.";
+        $_SESSION['message_type'] = "success";
+        // Redirect to the result page
+        header('Location: ../views/decision_tree/c45.php');
+        exit();
+    }
+}
+
 // Remove duplicates
 $data = array_unique($data, SORT_REGULAR);
 
@@ -289,7 +302,8 @@ $decisionTree = [
     ]
 ];
 
-function saveDecisionTree($db, $node, $parentNodeId = null) {
+function saveDecisionTree($db, $node, $parentNodeId = null)
+{
     $sql = "INSERT INTO decision_tree (parent_node_id, attribute_name, attribute_value, is_leaf, class_label) VALUES (?, ?, ?, ?, ?)";
     $stmt = $db->prepare($sql);
 
