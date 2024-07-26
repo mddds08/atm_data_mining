@@ -3,14 +3,24 @@ session_start();
 require '../config/database.php';
 require '../models/atmData.php';
 
+
 // Instantiate database and product object
 $database = new Database();
 $db = $database->getConnection();
 
 // Initialize object
 $atmData = new ATMData($db);
-$data = $atmData->getDataForC45();
 
+$action = isset($_POST['action']) ? $_POST['action'] : '';
+
+if ($action === 'clean') {
+    // Clean results from session and database
+    $atmData->cleanC45Results();
+    unset($_SESSION['c45_result']);
+    header('Location: ../views/decision_tree/c45.php');
+    exit();
+}
+$data = $atmData->getDataForC45();
 
 // Remove duplicates
 $data = array_unique($data, SORT_REGULAR);
@@ -29,6 +39,7 @@ foreach ($data as &$row) {
 $atmData->deleteAllData();
 $atmData->saveBatch($data);
 
+// Fungsi untuk menghitung entropy
 function calculateEntropy($cases)
 {
     $total = array_sum($cases);
@@ -55,9 +66,6 @@ function calculateGain($total_cases, $attribute_cases)
 
     return $total_entropy - $weighted_entropy;
 }
-
-// Get data
-$data = $atmData->getDataForC45();
 
 // Function to categorize level_saldo
 function categorizeLevelSaldo($level_saldo)
@@ -100,7 +108,7 @@ $total_cases = [
 ];
 $total_entropy = calculateEntropy($total_cases);
 
-// Calculate entropy and gain for lokasi_atm
+// Calculate entropy and gain for each attribute
 $attributes = ['lokasi_atm', 'level_saldo', 'jarak_tempuh'];
 $results = [];
 
@@ -133,6 +141,7 @@ foreach ($attributes as $attribute) {
 }
 
 // Save C4.5 results to database
+// Save C4.5 results to database
 function saveC45Results($db, $results)
 {
     $sql = "INSERT INTO c45_results (attribute_name, attribute_value, total_cases, filled_cases, empty_cases, entropy, gain) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -153,49 +162,155 @@ function saveC45Results($db, $results)
     }
 }
 
-$tree = [
+// Generate unique node_id
+function generateNodeId()
+{
+    static $id = 0;
+    $id++;
+    return $id;
+}
+
+// Generate decision tree
+$decisionTree = [
     [
-        'node_id' => 1,
-        'parent_node_id' => NULL,
-        'attribute_name' => 'Lokasi ATM',
-        'attribute_value' => NULL,
-        'is_leaf' => 0,
-        'class_label' => NULL
-    ],
-    [
-        'node_id' => 2,
-        'parent_node_id' => 1,
-        'attribute_name' => 'Lokasi ATM',
-        'attribute_value' => 'KC SUNGGUMINASA',
-        'is_leaf' => 1,
-        'class_label' => 'Tidak Isi'
-    ],
-    [
-        'node_id' => 3,
-        'parent_node_id' => 1,
-        'attribute_name' => 'Lokasi ATM',
-        'attribute_value' => 'KC TAMALANREA',
-        'is_leaf' => 0,
-        'class_label' => NULL
-    ],
-    [
-        'node_id' => 4,
-        'parent_node_id' => 3,
+        'node_id' => generateNodeId(),
+        'parent_node_id' => null,
         'attribute_name' => 'Level Saldo',
-        'attribute_value' => 'Tinggi',
-        'is_leaf' => 1,
-        'class_label' => 'Isi'
-    ],
-    [
-        'node_id' => 5,
-        'parent_node_id' => 3,
-        'attribute_name' => 'Level Saldo',
-        'attribute_value' => 'Rendah',
-        'is_leaf' => 1,
-        'class_label' => 'Tidak Isi'
+        'attribute_value' => null,
+        'is_leaf' => 0,
+        'class_label' => null,
+        'children' => [
+            [
+                'node_id' => generateNodeId(),
+                'parent_node_id' => 1,
+                'attribute_name' => 'Level Saldo',
+                'attribute_value' => 'Rendah',
+                'is_leaf' => 1,
+                'class_label' => 'Isi',
+                'children' => []
+            ],
+            [
+                'node_id' => generateNodeId(),
+                'parent_node_id' => 1,
+                'attribute_name' => 'Jarak Tempuh',
+                'attribute_value' => 'Dekat',
+                'is_leaf' => 0,
+                'class_label' => null,
+                'children' => [
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC SUNGGUMINASA',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC TAMALANREA',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC TAKALAR',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC PANGKEP',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC MAROS',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC JENEPONTO',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC PANAKKUKANG',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => 3,
+                        'attribute_name' => 'Lokasi ATM',
+                        'attribute_value' => 'KC MAKASSAR SOMBA_OPU',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ]
+                ]
+            ],
+            [
+                'node_id' => generateNodeId(),
+                'parent_node_id' => 1,
+                'attribute_name' => 'Jarak Tempuh',
+                'attribute_value' => 'Sedang',
+                'is_leaf' => 1,
+                'class_label' => 'Isi',
+                'children' => []
+            ],
+            [
+                'node_id' => generateNodeId(),
+                'parent_node_id' => 1,
+                'attribute_name' => 'Level Saldo',
+                'attribute_value' => 'Tinggi',
+                'is_leaf' => 0,
+                'class_label' => null,
+                'children' => [
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => generateNodeId(),
+                        'attribute_name' => 'Jarak Tempuh',
+                        'attribute_value' => 'Dekat',
+                        'is_leaf' => 1,
+                        'class_label' => 'Tidak Isi',
+                        'children' => []
+                    ],
+                    [
+                        'node_id' => generateNodeId(),
+                        'parent_node_id' => generateNodeId(),
+                        'attribute_name' => 'Jarak Tempuh',
+                        'attribute_value' => 'Jauh',
+                        'is_leaf' => 1,
+                        'class_label' => 'Isi',
+                        'children' => []
+                    ]
+                ]
+            ]
+        ]
     ]
 ];
-
 
 // Save decision tree to database
 function saveDecisionTree($db, $tree)
@@ -209,7 +324,7 @@ function saveDecisionTree($db, $tree)
             $node['parent_node_id'],
             $node['attribute_name'],
             $node['attribute_value'],
-            $node['is_leaf'],
+            (int) $node['is_leaf'], // Ensure the value is an integer
             $node['class_label']
         ]);
     }
@@ -217,16 +332,13 @@ function saveDecisionTree($db, $tree)
 
 // Save results to database
 saveC45Results($db, $results);
-saveDecisionTree($db, $tree);
+saveDecisionTree($db, $decisionTree);
 $_SESSION['c45_result'] = [
     'total_cases' => $total_cases,
     'total_entropy' => $total_entropy,
     'results' => $results,
-    'decision_tree' => $tree
+    'decision_tree' => $decisionTree
 ];
-
-// $_SESSION['message'] = "Proses C4.5 dan pohon keputusan selesai. Hasil telah disimpan ke database.";
-// $_SESSION['message_type'] = "success";
 
 // Redirect to result page
 header('Location: ../views/decision_tree/c45.php');

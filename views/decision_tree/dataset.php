@@ -38,7 +38,7 @@ if (isset($_SESSION['message'])) {
             <div class="input-group">
                 <div class="custom-file">
                     <input type="file" class="custom-file-input" id="fileUpload" name="fileUpload">
-                    <label class="custom-file-label" for="fileUpload">Choose file</label>
+                    <label class="custom-file-label" for="fileUpload">Pilih file :</label>
                 </div>
                 <div class="input-group-append">
                     <button type="submit" class="btn btn-primary">Import</button>
@@ -85,13 +85,7 @@ if (isset($_SESSION['message'])) {
                 <p class="card-text">Jumlah total data dalam tabel : <strong><?php echo $totalData; ?></strong></p>
             </div>
         </div>
-        <!-- Grafik Analisis Data -->
-        <div class="card mt-3">
-            <div class="card-body">
-                <h5 class="card-title">Grafik Analisis Data</h5>
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
+
     <?php else: ?>
         <p class="mt-3">No data available.</p>
     <?php endif; ?>

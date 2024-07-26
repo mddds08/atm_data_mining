@@ -7,7 +7,10 @@
     <title>ATM Data Mining</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
-    <link href="/atm-data-mining/css/style.css" rel="stylesheet">
+    <link href="/atm_data_mining/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <link rel="shortcut icon" href="/atm_data_mining/assets/icons/icon.png" />
 </head>
 
@@ -30,16 +33,16 @@
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav mr-auto">
                             <li class="nav-item">
-                                <a class="nav-link" href="/atm_data_mining/views/decision_tree/dataset.php"><i
-                                        class="fas fa-database px-2"></i> Dataset</a>
+                                <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/dataset.php"><i
+                                        class="fas fa-database pr-1"></i> Dataset</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/atm_data_mining/views/decision_tree/klasifikasi.php"><i
-                                        class="fas fa-cogs px-2"></i> Proses Klasifikasi</a>
+                                <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/klasifikasi.php"><i
+                                        class="fas fa-cogs pr-1"></i> Proses Klasifikasi</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/atm_data_mining/views/decision_tree/c45.php"><i
-                                        class="fas fa-tree px-2"></i> C4.5 & Pohon Keputusan</a>
+                                <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/c45.php"><i
+                                        class="fas fa-tree pr-1"></i> C4.5 & Pohon Keputusan</a>
                             </li>
                         </ul>
                         <ul class="navbar-nav ml-auto">

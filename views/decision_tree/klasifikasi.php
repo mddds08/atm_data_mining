@@ -55,13 +55,7 @@ if (isset($_SESSION['message'])) {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <!-- Grafik Analisis Data -->
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Grafik Analisis Data</h5>
-                        <canvas id="statusChart"></canvas>
-                    </div>
-                </div>
+
                 <form action="../../controllers/preprocessing.php" method="post" class="text-center mt-4">
                     <button type="submit" class="btn btn-warning btn-lg btn-block">
                         <i class="fas fa-broom"></i> Preprocess Data

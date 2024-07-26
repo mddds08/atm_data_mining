@@ -28,6 +28,17 @@ class ATMData
 
         return false;
     }
+    // cleanC45Results
+    public function cleanC45Results()
+    {
+        $query = "DELETE FROM c45_results";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        $query = "DELETE FROM decision_tree";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+    }
 
     // Method to get all data
     public function getAllData()
@@ -101,6 +112,21 @@ class ATMData
             'accuracy_results' => $accuracy_results,
             'average_accuracy' => $average_accuracy
         ];
+    }
+    public function getC45Results()
+    {
+        $query = "SELECT * FROM c45_results";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function getDecisionTree()
+    {
+        $query = "SELECT * FROM decision_tree ORDER BY node_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
     }
 }
 ?>
