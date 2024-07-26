@@ -10,16 +10,6 @@ $db = $database->getConnection();
 
 // Initialize object
 $atmData = new ATMData($db);
-
-$action = isset($_POST['action']) ? $_POST['action'] : '';
-
-if ($action === 'clean') {
-    // Clean results from session and database
-    $atmData->cleanC45Results();
-    unset($_SESSION['c45_result']);
-    header('Location: ../views/decision_tree/c45.php');
-    exit();
-}
 $data = $atmData->getDataForC45();
 
 // Remove duplicates
@@ -34,10 +24,6 @@ foreach ($data as &$row) {
         }
     }
 }
-
-// Save preprocessed data back to database
-$atmData->deleteAllData();
-$atmData->saveBatch($data);
 
 // Fungsi untuk menghitung entropy
 function calculateEntropy($cases)
@@ -141,7 +127,6 @@ foreach ($attributes as $attribute) {
 }
 
 // Save C4.5 results to database
-// Save C4.5 results to database
 function saveC45Results($db, $results)
 {
     $sql = "INSERT INTO c45_results (attribute_name, attribute_value, total_cases, filled_cases, empty_cases, entropy, gain) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -162,18 +147,10 @@ function saveC45Results($db, $results)
     }
 }
 
-// Generate unique node_id
-function generateNodeId()
-{
-    static $id = 0;
-    $id++;
-    return $id;
-}
-
 // Generate decision tree
 $decisionTree = [
     [
-        'node_id' => generateNodeId(),
+        'node_id' => 1,
         'parent_node_id' => null,
         'attribute_name' => 'Level Saldo',
         'attribute_value' => null,
@@ -181,7 +158,7 @@ $decisionTree = [
         'class_label' => null,
         'children' => [
             [
-                'node_id' => generateNodeId(),
+                'node_id' => 2,
                 'parent_node_id' => 1,
                 'attribute_name' => 'Level Saldo',
                 'attribute_value' => 'Rendah',
@@ -190,7 +167,7 @@ $decisionTree = [
                 'children' => []
             ],
             [
-                'node_id' => generateNodeId(),
+                'node_id' => 3,
                 'parent_node_id' => 1,
                 'attribute_name' => 'Jarak Tempuh',
                 'attribute_value' => 'Dekat',
@@ -198,7 +175,7 @@ $decisionTree = [
                 'class_label' => null,
                 'children' => [
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 4,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC SUNGGUMINASA',
@@ -207,7 +184,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 5,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC TAMALANREA',
@@ -216,7 +193,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 6,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC TAKALAR',
@@ -225,7 +202,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 7,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC PANGKEP',
@@ -234,7 +211,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 8,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC MAROS',
@@ -243,7 +220,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 9,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC JENEPONTO',
@@ -252,7 +229,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 10,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC PANAKKUKANG',
@@ -261,7 +238,7 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
+                        'node_id' => 11,
                         'parent_node_id' => 3,
                         'attribute_name' => 'Lokasi ATM',
                         'attribute_value' => 'KC MAKASSAR SOMBA_OPU',
@@ -272,7 +249,7 @@ $decisionTree = [
                 ]
             ],
             [
-                'node_id' => generateNodeId(),
+                'node_id' => 12,
                 'parent_node_id' => 1,
                 'attribute_name' => 'Jarak Tempuh',
                 'attribute_value' => 'Sedang',
@@ -281,7 +258,7 @@ $decisionTree = [
                 'children' => []
             ],
             [
-                'node_id' => generateNodeId(),
+                'node_id' => 13,
                 'parent_node_id' => 1,
                 'attribute_name' => 'Level Saldo',
                 'attribute_value' => 'Tinggi',
@@ -289,8 +266,8 @@ $decisionTree = [
                 'class_label' => null,
                 'children' => [
                     [
-                        'node_id' => generateNodeId(),
-                        'parent_node_id' => generateNodeId(),
+                        'node_id' => 14,
+                        'parent_node_id' => 13,
                         'attribute_name' => 'Jarak Tempuh',
                         'attribute_value' => 'Dekat',
                         'is_leaf' => 1,
@@ -298,11 +275,11 @@ $decisionTree = [
                         'children' => []
                     ],
                     [
-                        'node_id' => generateNodeId(),
-                        'parent_node_id' => generateNodeId(),
+                        'node_id' => 15,
+                        'parent_node_id' => 13,
                         'attribute_name' => 'Jarak Tempuh',
                         'attribute_value' => 'Jauh',
-                        'is_leaf' => 1,
+                        'is_leaf' => true,
                         'class_label' => 'Isi',
                         'children' => []
                     ]
@@ -312,27 +289,30 @@ $decisionTree = [
     ]
 ];
 
-// Save decision tree to database
-function saveDecisionTree($db, $tree)
-{
-    $sql = "INSERT INTO decision_tree (node_id, parent_node_id, attribute_name, attribute_value, is_leaf, class_label) VALUES (?, ?, ?, ?, ?, ?)";
+function saveDecisionTree($db, $node, $parentNodeId = null) {
+    $sql = "INSERT INTO decision_tree (parent_node_id, attribute_name, attribute_value, is_leaf, class_label) VALUES (?, ?, ?, ?, ?)";
     $stmt = $db->prepare($sql);
 
-    foreach ($tree as $node) {
-        $stmt->execute([
-            $node['node_id'],
-            $node['parent_node_id'],
-            $node['attribute_name'],
-            $node['attribute_value'],
-            (int) $node['is_leaf'], // Ensure the value is an integer
-            $node['class_label']
-        ]);
+    $stmt->execute([
+        $parentNodeId,
+        $node['attribute_name'],
+        $node['attribute_value'],
+        $node['is_leaf'],
+        $node['class_label']
+    ]);
+
+    $nodeId = $db->lastInsertId();
+
+    if (!empty($node['children'])) {
+        foreach ($node['children'] as $child) {
+            saveDecisionTree($db, $child, $nodeId);
+        }
     }
 }
 
 // Save results to database
 saveC45Results($db, $results);
-saveDecisionTree($db, $decisionTree);
+saveDecisionTree($db, $decisionTree[0]); // Assuming $decisionTree is the root node
 $_SESSION['c45_result'] = [
     'total_cases' => $total_cases,
     'total_entropy' => $total_entropy,
@@ -343,4 +323,3 @@ $_SESSION['c45_result'] = [
 // Redirect to result page
 header('Location: ../views/decision_tree/c45.php');
 exit();
-?>
