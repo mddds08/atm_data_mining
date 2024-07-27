@@ -1,6 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header('Location: views/login.php');
+    exit();
+}
 include 'views/partials/header.php';
-
 ?>
 <div class="container mt-5">
     <div class="card shadow-sm">

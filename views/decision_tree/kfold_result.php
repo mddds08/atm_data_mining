@@ -1,7 +1,6 @@
 <?php
-include __DIR__ . '/../partials/header.php';
 session_start();
-
+include __DIR__ . '/../partials/header.php';
 $kfold_result = isset($_SESSION['kfold_result']) ? $_SESSION['kfold_result'] : null;
 unset($_SESSION['kfold_result']);
 ?>

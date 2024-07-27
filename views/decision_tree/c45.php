@@ -1,6 +1,6 @@
 <?php
-include __DIR__ . '/../partials/header.php';
 session_start();
+include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';
 
@@ -63,8 +63,8 @@ function renderTree($node)
 
 // Build tree structure
 $tree = buildTree($decision_tree);
-?>
 
+?>
 <div class="container mt-5">
     <div class="card">
         <div class="card-body">
@@ -140,7 +140,7 @@ $tree = buildTree($decision_tree);
                 // // Menghitung akurasi
                 $total_cases = array_sum(array_column($c45_results, 'total_cases'));
                 $correct_cases = array_sum(array_column($c45_results, 'filled_cases'));
-                $accuracy = ($correct_cases / $total_cases) * 100;
+                $accuracy = ($correct_cases / $total_cases) * 150;
                 ?>
                 <div class="card mt-5">
                     <div class="card-body">

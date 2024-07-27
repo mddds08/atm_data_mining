@@ -10,7 +10,7 @@
     <link href="/atm_data_mining/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="shortcut icon" href="/atm_data_mining/assets/icons/icon.png" />
 </head>
 
@@ -46,12 +46,21 @@
                             </li>
                         </ul>
                         <ul class="navbar-nav ml-auto">
-                            <li class="nav-item dropdown">
-                                <a>
-                                    STMIK PROFESIONAL | JURUSAN SISTEM INFORMASI
-                                </a>
-
-                            </li>
+                            <?php if (isset($_SESSION['username'])): ?>
+                                <li class="nav-item">
+                                    <span class="nav-link"><i class="fas fa-user"></i> Hello,
+                                        <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link px-3" href="/atm_data_mining/views/logout.php"><i
+                                            class="fas fa-sign-out-alt pr-1"></i> Logout</a>
+                                </li>
+                            <?php else: ?>
+                                <li class="nav-item">
+                                    <a class="nav-link px-3" href="/atm_data_mining/views/login.php"><i
+                                            class="fas fa-sign-in-alt pr-1"></i> Login</a>
+                                </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </div>

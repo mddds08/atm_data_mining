@@ -1,6 +1,6 @@
 <?php
-include __DIR__ . '/../partials/header.php';
 session_start();
+include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';
 
@@ -27,6 +27,7 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['message']);
     unset($_SESSION['message_type']);
 }
+
 ?>
 <div class="container mt-5">
     <div class="card">

@@ -1,7 +1,7 @@
 <?php
-include __DIR__ . '/../partials/header.php';
 session_start();
-
+include __DIR__ . '../../controllers/protect.php';
+include __DIR__ . '/../partials/header.php';
 // Get data from session
 $data = isset($_SESSION['atm_data']) ? $_SESSION['atm_data'] : [];
 

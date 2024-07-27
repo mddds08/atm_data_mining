@@ -57,14 +57,58 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header('Location: ../views/decision_tree/dataset.php');
         exit();
     }
-    if (isset($_POST['action']) && $_POST['action'] === 'delete_all') {
-        // Hapus semua data
-        if ($atmData->deleteAllData()) {
-            $_SESSION['message'] = 'Semua data berhasil dihapus.';
-            $_SESSION['message_type'] = 'success';
-        } else {
-            $_SESSION['message'] = 'Gagal menghapus semua data.';
-            $_SESSION['message_type'] = 'danger';
+
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'delete_all':
+                if ($atmData->deleteAllData()) {
+                    $_SESSION['message'] = 'Semua data berhasil dihapus.';
+                    $_SESSION['message_type'] = 'success';
+                } else {
+                    $_SESSION['message'] = 'Gagal menghapus semua data.';
+                    $_SESSION['message_type'] = 'danger';
+                }
+                break;
+
+            case 'add':
+                $lokasi_atm = $_POST['lokasi_atm'];
+                $jarak_tempuh = $_POST['jarak_tempuh'];
+                $level_saldo = $_POST['level_saldo'];
+                $status_isi = $_POST['status_isi'];
+                if ($atmData->addData($lokasi_atm, $jarak_tempuh, $level_saldo, $status_isi)) {
+                    $_SESSION['message'] = 'Data berhasil ditambahkan.';
+                    $_SESSION['message_type'] = 'success';
+                } else {
+                    $_SESSION['message'] = 'Gagal menambahkan data.';
+                    $_SESSION['message_type'] = 'danger';
+                }
+                break;
+
+            case 'edit':
+                $id = $_POST['id'];
+                $lokasi_atm = $_POST['lokasi_atm'];
+                $jarak_tempuh = $_POST['jarak_tempuh'];
+                $level_saldo = $_POST['level_saldo'];
+                $status_isi = $_POST['status_isi'];
+                if ($atmData->updateData($id, $lokasi_atm, $jarak_tempuh, $level_saldo, $status_isi)) {
+                    $_SESSION['message'] = 'Data berhasil diubah.';
+                    $_SESSION['message_type'] = 'success';
+                } else {
+                    $_SESSION['message'] = 'Gagal mengubah data.';
+                    $_SESSION['message_type'] = 'danger';
+                }
+                break;
+
+            case 'delete':
+                $id = $_POST['id'];
+                if ($atmData->deleteData($id)) {
+                    $_SESSION['message'] = 'Data berhasil dihapus.';
+                    $_SESSION['message_type'] = 'success';
+                } else {
+                    $_SESSION['message'] = 'Gagal menghapus data.';
+                    $_SESSION['message_type'] = 'danger';
+                }
+                break;
         }
         header('Location: ../views/decision_tree/dataset.php');
         exit();

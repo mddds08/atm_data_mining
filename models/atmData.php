@@ -28,7 +28,50 @@ class ATMData
 
         return false;
     }
-    // cleanC45Results
+
+    public function addData($lokasi_atm, $jarak_tempuh, $level_saldo, $status_isi)
+    {
+        $query = "INSERT INTO " . $this->table_name . " (lokasi_atm, jarak_tempuh, level_saldo, status_isi) VALUES (:lokasi_atm, :jarak_tempuh, :level_saldo, :status_isi)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':lokasi_atm', $lokasi_atm);
+        $stmt->bindParam(':jarak_tempuh', $jarak_tempuh);
+        $stmt->bindParam(':level_saldo', $level_saldo);
+        $stmt->bindParam(':status_isi', $status_isi);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    public function updateData($id, $lokasi_atm, $jarak_tempuh, $level_saldo, $status_isi)
+    {
+        $query = "UPDATE " . $this->table_name . " SET lokasi_atm = :lokasi_atm, jarak_tempuh = :jarak_tempuh, level_saldo = :level_saldo, status_isi = :status_isi WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':lokasi_atm', $lokasi_atm);
+        $stmt->bindParam(':jarak_tempuh', $jarak_tempuh);
+        $stmt->bindParam(':level_saldo', $level_saldo);
+        $stmt->bindParam(':status_isi', $status_isi);
+        $stmt->bindParam(':id', $id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    public function deleteData($id)
+    {
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
     public function cleanC45Results()
     {
         // Menghapus data dari decision_tree dalam urutan yang benar
@@ -39,7 +82,7 @@ class ATMData
 
         // Hapus data dari c45_results
         $this->conn->exec("DELETE FROM c45_results");
-    }   
+    }
 
     // Method to get all data
     public function getAllData()
@@ -58,7 +101,7 @@ class ATMData
         return $stmt->execute();
     }
 
-    // Method to classify data
+    // Metode untuk klasifikasi data
     public function getClassifiedData()
     {
         $query = "SELECT lokasi_atm, jarak_tempuh, level_saldo,
@@ -68,9 +111,9 @@ class ATMData
                     WHEN level_saldo > 50 THEN 'Tinggi'
                   END AS klasifikasi_saldo,
                   CASE
-                    WHEN jarak_tempuh < 60 THEN 'Dekat'
-                    WHEN jarak_tempuh BETWEEN 60 AND 90 THEN 'Sedang'
-                    WHEN jarak_tempuh > 90 THEN 'Jauh'
+                    WHEN jarak_tempuh < 40 THEN 'Dekat'
+                    WHEN jarak_tempuh BETWEEN 40 AND 70 THEN 'Sedang'
+                    WHEN jarak_tempuh > 70 THEN 'Jauh'
                   END AS klasifikasi_jarak
                   FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
@@ -86,6 +129,7 @@ class ATMData
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
     // Method to perform K-Fold Cross Validation
     public function performKFoldCrossValidation($k = 10)
     {
@@ -114,6 +158,7 @@ class ATMData
             'average_accuracy' => $average_accuracy
         ];
     }
+
     public function getC45Results()
     {
         $query = "SELECT * FROM c45_results";
@@ -128,6 +173,54 @@ class ATMData
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
+    }
+
+    public function getAttributes()
+    {
+        $query = "SELECT * FROM attributes";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function getAttributeById($id)
+    {
+        $query = "SELECT * FROM attributes WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $id);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function addAttribute($name, $operator, $value, $classification)
+    {
+        $query = "INSERT INTO attributes (name, operator, value, classification) VALUES (:name, :operator, :value, :classification)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':operator', $operator);
+        $stmt->bindParam(':value', $value);
+        $stmt->bindParam(':classification', $classification);
+        return $stmt->execute();
+    }
+
+    public function updateAttribute($id, $name, $operator, $value, $classification)
+    {
+        $query = "UPDATE attributes SET name = :name, operator = :operator, value = :value, classification = :classification WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':operator', $operator);
+        $stmt->bindParam(':value', $value);
+        $stmt->bindParam(':classification', $classification);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
+    public function deleteAttribute($id)
+    {
+        $query = "DELETE FROM attributes WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
     }
 }
 ?>

@@ -53,7 +53,7 @@ function calculateEntropy($cases)
 
     return $entropy;
 }
-
+// Fungsi untuk menghitung gain
 function calculateGain($total_cases, $attribute_cases)
 {
     $total_entropy = calculateEntropy($total_cases);
