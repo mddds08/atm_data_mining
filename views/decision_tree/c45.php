@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';
@@ -11,15 +12,11 @@ $db = $database->getConnection();
 // Initialize object
 $atmData = new ATMData($db);
 
-// Get C4.5 results from database
-$stmt = $db->prepare("SELECT * FROM c45_results");
-$stmt->execute();
-$c45_results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Get C4.5 results from model
+$c45_results = $atmData->getC45Results();
 
-// Get decision tree from database
-$stmt = $db->prepare("SELECT * FROM decision_tree ORDER BY node_id ASC");
-$stmt->execute();
-$decision_tree = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Get decision tree from model
+$decision_tree = $atmData->getDecisionTree();
 
 // Function to build tree structure from flat data
 function buildTree($flatData)
@@ -64,6 +61,11 @@ function renderTree($node)
 // Build tree structure
 $tree = buildTree($decision_tree);
 
+function formatEntropy($value)
+{
+    return $value == 1 ? '1.0' : number_format($value, 3);
+}
+
 ?>
 <div class="container mt-5">
     <div class="card">
@@ -81,66 +83,69 @@ $tree = buildTree($decision_tree);
                 <table class="table table-bordered mt-3">
                     <thead class="thead-light">
                         <tr>
-                            <th>Atribut</th>
-                            <th>Nilai</th>
-                            <th>Jumlah Kasus</th>
+                            <th>Node</th>
+                            <th>Attribute</th>
+                            <th>Value</th>
+                            <th>Total</th>
                             <th>Isi</th>
                             <th>Tidak Isi</th>
-                            <th>Total Entropy</th>
+                            <th>Entropy</th>
                             <th>Gain</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
+                        $node = 1;
                         $last_attribute = '';
-                        $total_cases = $total_filled = $total_empty = 0;
                         foreach ($c45_results as $result):
-                            $is_new_attribute = $result['attribute_name'] !== $last_attribute;
-                            if ($is_new_attribute && $last_attribute !== ''): ?>
-                                <tr class="font-weight-bold">
-                                    <td><?php echo htmlspecialchars($last_attribute); ?></td>
+                            if ($result['attribute_name'] !== $last_attribute): ?>
+                                <tr class="font-weight-bold table-primary">
+                                    <td><?php echo $node; ?></td>
+                                    <td><?php echo htmlspecialchars($result['attribute_name']); ?></td>
                                     <td></td>
-                                    <td><?php echo $total_cases; ?></td>
-                                    <td><?php echo $total_filled; ?></td>
-                                    <td><?php echo $total_empty; ?></td>
-                                    <td></td>
-                                    <td><?php echo htmlspecialchars($result['gain']); ?></td>
+                                    <td><?php echo array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
+                                        return $r['attribute_name'] == $result['attribute_name'];
+                                    }), 'total_cases')); ?>
+                                    </td>
+                                    <td><?php echo array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
+                                        return $r['attribute_name'] == $result['attribute_name'];
+                                    }), 'filled_cases')); ?>
+                                    </td>
+                                    <td><?php echo array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
+                                        return $r['attribute_name'] == $result['attribute_name'];
+                                    }), 'empty_cases')); ?>
+                                    </td>
+                                    <td><?php echo formatEntropy(array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
+                                        return $r['attribute_name'] == $result['attribute_name'];
+                                    }), 'entropy')) / count(array_filter($c45_results, function ($r) use ($result) {
+                                        return $r['attribute_name'] == $result['attribute_name'];
+                                    }))); ?>
+                                    </td>
+                                    <td><?php echo number_format($result['gain'], 3); ?></td>
                                 </tr>
                                 <?php
-                                $total_cases = $total_filled = $total_empty = 0;
-                            endif;
-                            $total_cases += $result['total_cases'];
-                            $total_filled += $result['filled_cases'];
-                            $total_empty += $result['empty_cases'];
-                            $last_attribute = $result['attribute_name'];
-                            ?>
+                                $last_attribute = $result['attribute_name'];
+                                $node++;
+                            endif; ?>
                             <tr>
+                                <td></td>
                                 <td></td>
                                 <td><?php echo htmlspecialchars($result['attribute_value']); ?></td>
                                 <td><?php echo htmlspecialchars($result['total_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['filled_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['empty_cases']); ?></td>
-                                <td><?php echo htmlspecialchars($result['entropy']); ?></td>
-                                <td></td> <!-- Empty gain column for attribute values -->
+                                <td><?php echo (number_format($result['entropy'], 1) == 1.0) ? 1 : number_format($result['entropy'], 1); ?>
+                                </td>
+                                <td></td>
                             </tr>
                         <?php endforeach; ?>
-                        <!-- Print the last attribute's total cases -->
-                        <tr class="font-weight-bold">
-                            <td><?php echo htmlspecialchars($last_attribute); ?></td>
-                            <td></td>
-                            <td><?php echo $total_cases; ?></td>
-                            <td><?php echo $total_filled; ?></td>
-                            <td><?php echo $total_empty; ?></td>
-                            <td></td>
-                            <td><?php echo htmlspecialchars($result['gain']); ?></td>
-                        </tr>
                     </tbody>
                 </table>
                 <?php
-                // // Menghitung akurasi
+                // Menghitung akurasi
                 $total_cases = array_sum(array_column($c45_results, 'total_cases'));
                 $correct_cases = array_sum(array_column($c45_results, 'filled_cases'));
-                $accuracy = ($correct_cases / $total_cases) * 150;
+                $accuracy = ($correct_cases / $total_cases) * 100;
                 ?>
                 <div class="card mt-5">
                     <div class="card-body">
@@ -156,8 +161,7 @@ $tree = buildTree($decision_tree);
                 <ul class="list-group">
                     <li class="list-group-item">Jika level saldo = rendah maka ISI</li>
                     <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC SUNGGUMINASA
-                        maka ISI</li>
+                        atm = KC SUNGGUMINASA maka ISI</li>
                     <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
                         atm = KC TAMALANREA maka
                         ISI</li>
@@ -199,7 +203,12 @@ $tree = buildTree($decision_tree);
                     echo 'disabled'; ?>>
                     Bersihkan Hasil C4.5
                 </button>
-
+                <!-- Tombol Ekspor -->
+                <form action="../../controllers/export_c45.php" method="post" class="mt-4">
+                    <button type="submit" class="btn btn-success btn-lg btn-block">
+                        <i class="fas fa-file-excel px-3"></i>Ekspor Hasil C4.5 ke Excel
+                    </button>
+                </form>
                 <!-- Modal -->
                 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog"
                     aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">

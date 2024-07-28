@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';

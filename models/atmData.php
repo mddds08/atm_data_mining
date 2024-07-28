@@ -9,6 +9,86 @@ class ATMData
         $this->conn = $db;
     }
 
+    // Fungsi untuk preprocessing data
+    public function preprocessData($data)
+    {
+        // Handle missing values
+        foreach ($data as &$row) {
+            foreach ($row as $key => $value) {
+                if ($value === null || $value === '') {
+                    $row[$key] = $this->calculateFillValue($data, $key);
+                }
+            }
+        }
+
+        // Normalize numeric features (example: min-max normalization)
+        $numericFeatures = ['jarak_tempuh', 'level_saldo'];
+        foreach ($numericFeatures as $feature) {
+            $min = min(array_column($data, $feature));
+            $max = max(array_column($data, $feature));
+            foreach ($data as &$row) {
+                if ($max - $min != 0) {
+                    $row[$feature] = ($row[$feature] - $min) / ($max - $min);
+                } else {
+                    $row[$feature] = 0;
+                }
+            }
+        }
+
+        // Handle outliers
+        $data = $this->handleOutliers($data, $numericFeatures);
+
+        return $data;
+    }
+
+    // Function to calculate fill value for missing data
+    private function calculateFillValue($data, $feature)
+    {
+        // Example: fill with mean value
+        $values = array_column($data, $feature);
+        $values = array_filter($values, function ($value) {
+            return $value !== null && $value !== '';
+        });
+        return array_sum($values) / count($values);
+    }
+
+    // Function to handle outliers
+    private function handleOutliers($data, $numericFeatures)
+    {
+        foreach ($numericFeatures as $feature) {
+            $values = array_column($data, $feature);
+            $q1 = $this->calculatePercentile($values, 25);
+            $q3 = $this->calculatePercentile($values, 75);
+            $iqr = $q3 - $q1;
+
+            $lowerBound = $q1 - 1.5 * $iqr;
+            $upperBound = $q3 + 1.5 * $iqr;
+
+            foreach ($data as &$row) {
+                if ($row[$feature] < $lowerBound) {
+                    $row[$feature] = $lowerBound;
+                } elseif ($row[$feature] > $upperBound) {
+                    $row[$feature] = $upperBound;
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    // Function to calculate percentile
+    private function calculatePercentile($values, $percentile)
+    {
+        sort($values);
+        $index = ($percentile / 100) * count($values);
+        if (floor($index) == $index) {
+            $result = ($values[$index - 1] + $values[$index]) / 2;
+        } else {
+            $result = $values[floor($index)];
+        }
+        return $result;
+    }
+
     // Method to save batch data
     public function saveBatch($data)
     {
@@ -74,14 +154,18 @@ class ATMData
 
     public function cleanC45Results()
     {
-        // Menghapus data dari decision_tree dalam urutan yang benar
-        $this->conn->exec("SET FOREIGN_KEY_CHECKS=0"); // Nonaktifkan pemeriksaan kunci asing sementara
+        // Nonaktifkan pemeriksaan kunci asing sementara
+        $this->conn->exec("SET FOREIGN_KEY_CHECKS=0");
+
+        // Hapus data dari decision_tree dalam urutan yang benar
         $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NOT NULL"); // Hapus child nodes terlebih dahulu
         $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NULL"); // Hapus parent nodes
-        $this->conn->exec("SET FOREIGN_KEY_CHECKS=1"); // Aktifkan kembali pemeriksaan kunci asing
 
         // Hapus data dari c45_results
         $this->conn->exec("DELETE FROM c45_results");
+
+        // Aktifkan kembali pemeriksaan kunci asing
+        $this->conn->exec("SET FOREIGN_KEY_CHECKS=1");
     }
 
     // Method to get all data
@@ -107,13 +191,13 @@ class ATMData
         $query = "SELECT lokasi_atm, jarak_tempuh, level_saldo,
                   CASE
                     WHEN level_saldo < 30 THEN 'Rendah'
-                    WHEN level_saldo BETWEEN 30 AND 50 THEN 'Sedang'
-                    WHEN level_saldo > 50 THEN 'Tinggi'
+                    WHEN level_saldo BETWEEN 30 AND 60 THEN 'Sedang'
+                    WHEN level_saldo > 60 THEN 'Tinggi'
                   END AS klasifikasi_saldo,
                   CASE
-                    WHEN jarak_tempuh < 40 THEN 'Dekat'
-                    WHEN jarak_tempuh BETWEEN 40 AND 70 THEN 'Sedang'
-                    WHEN jarak_tempuh > 70 THEN 'Jauh'
+                    WHEN jarak_tempuh < 30 THEN 'Dekat'
+                    WHEN jarak_tempuh BETWEEN 30 AND 60 THEN 'Sedang'
+                    WHEN jarak_tempuh > 60 THEN 'Jauh'
                   END AS klasifikasi_jarak
                   FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
@@ -164,15 +248,15 @@ class ATMData
         $query = "SELECT * FROM c45_results";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        return $stmt;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getDecisionTree()
     {
-        $query = "SELECT * FROM decision_tree ORDER BY node_id";
+        $query = "SELECT * FROM decision_tree ORDER BY node_id ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        return $stmt;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getAttributes()

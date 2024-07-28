@@ -3,7 +3,6 @@ session_start();
 require '../config/database.php';
 require '../models/atmData.php';
 
-
 // Instantiate database and product object
 $database = new Database();
 $db = $database->getConnection();
@@ -16,9 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'clear_c45') {
         // Clear C4.5 results
         $atmData->cleanC45Results();
+
         // Set session message
         $_SESSION['message'] = "Hasil C4.5 telah dibersihkan.";
         $_SESSION['message_type'] = "success";
+
         // Redirect to the result page
         header('Location: ../views/decision_tree/c45.php');
         exit();
@@ -37,6 +38,41 @@ foreach ($data as &$row) {
         }
     }
 }
+// Preprocess data function
+function preprocessData($data)
+{
+    // Handle missing values
+    foreach ($data as &$row) {
+        foreach ($row as $key => $value) {
+            if ($value === null || $value === '') {
+                $row[$key] = calculateFillValue($data, $key);
+            }
+        }
+    }
+
+    // Normalize numeric features (example: min-max normalization)
+    $numericFeatures = ['jarak_tempuh', 'level_saldo'];
+    foreach ($numericFeatures as $feature) {
+        $min = min(array_column($data, $feature));
+        $max = max(array_column($data, $feature));
+        foreach ($data as &$row) {
+            $row[$feature] = ($row[$feature] - $min) / ($max - $min);
+        }
+    }
+
+    return $data;
+}
+
+// Function to calculate fill value for missing data
+function calculateFillValue($data, $feature)
+{
+    // Example: fill with mean value
+    $values = array_column($data, $feature);
+    $values = array_filter($values, function ($value) {
+        return $value !== null && $value !== '';
+    });
+    return array_sum($values) / count($values);
+}
 
 // Fungsi untuk menghitung entropy
 function calculateEntropy($cases)
@@ -53,6 +89,7 @@ function calculateEntropy($cases)
 
     return $entropy;
 }
+
 // Fungsi untuk menghitung gain
 function calculateGain($total_cases, $attribute_cases)
 {
@@ -71,7 +108,7 @@ function categorizeLevelSaldo($level_saldo)
 {
     if ($level_saldo < 30) {
         return 'Rendah';
-    } elseif ($level_saldo <= 50) {
+    } elseif ($level_saldo <= 60) {
         return 'Sedang';
     } else {
         return 'Tinggi';
@@ -81,9 +118,9 @@ function categorizeLevelSaldo($level_saldo)
 // Function to categorize jarak_tempuh
 function categorizeJarakTempuh($jarak_tempuh)
 {
-    if ($jarak_tempuh < 60) {
+    if ($jarak_tempuh < 30) {
         return 'Dekat';
-    } elseif ($jarak_tempuh <= 90) {
+    } elseif ($jarak_tempuh <= 60) {
         return 'Sedang';
     } else {
         return 'Jauh';
@@ -142,6 +179,9 @@ foreach ($attributes as $attribute) {
 // Save C4.5 results to database
 function saveC45Results($db, $results)
 {
+    $sql = "DELETE FROM c45_results"; // Clear previous results
+    $db->exec($sql);
+
     $sql = "INSERT INTO c45_results (attribute_name, attribute_value, total_cases, filled_cases, empty_cases, entropy, gain) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $db->prepare($sql);
 
@@ -292,7 +332,7 @@ $decisionTree = [
                         'parent_node_id' => 13,
                         'attribute_name' => 'Jarak Tempuh',
                         'attribute_value' => 'Jauh',
-                        'is_leaf' => true,
+                        'is_leaf' => 1,
                         'class_label' => 'Isi',
                         'children' => []
                     ]
@@ -302,6 +342,7 @@ $decisionTree = [
     ]
 ];
 
+// Function to save decision tree
 function saveDecisionTree($db, $node, $parentNodeId = null)
 {
     $sql = "INSERT INTO decision_tree (parent_node_id, attribute_name, attribute_value, is_leaf, class_label) VALUES (?, ?, ?, ?, ?)";
@@ -324,9 +365,20 @@ function saveDecisionTree($db, $node, $parentNodeId = null)
     }
 }
 
+// Nonaktifkan pemeriksaan kunci asing sementara
+$db->exec("SET FOREIGN_KEY_CHECKS=0");
+
+// Hapus hasil lama dari decision_tree
+$db->exec("DELETE FROM decision_tree");
+
+// Simpan pohon keputusan baru
+saveDecisionTree($db, $decisionTree[0]); // Assuming $decisionTree is the root node
+
+// Aktifkan kembali pemeriksaan kunci asing
+$db->exec("SET FOREIGN_KEY_CHECKS=1");
+
 // Save results to database
 saveC45Results($db, $results);
-saveDecisionTree($db, $decisionTree[0]); // Assuming $decisionTree is the root node
 $_SESSION['c45_result'] = [
     'total_cases' => $total_cases,
     'total_entropy' => $total_entropy,
@@ -337,3 +389,4 @@ $_SESSION['c45_result'] = [
 // Redirect to result page
 header('Location: ../views/decision_tree/c45.php');
 exit();
+?>
