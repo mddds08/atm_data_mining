@@ -1,2 +1,3 @@
 controllers/protect.php
 .htaccess
+node_modules

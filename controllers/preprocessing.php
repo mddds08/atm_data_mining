@@ -36,4 +36,3 @@ $_SESSION['message_type'] = "success";
 // Redirect to dataset page
 header('Location: ../views/decision_tree/dataset.php');
 exit();
-?>

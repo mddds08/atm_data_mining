@@ -154,18 +154,9 @@ class ATMData
 
     public function cleanC45Results()
     {
-        // Nonaktifkan pemeriksaan kunci asing sementara
-        $this->conn->exec("SET FOREIGN_KEY_CHECKS=0");
-
-        // Hapus data dari decision_tree dalam urutan yang benar
-        $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NOT NULL"); // Hapus child nodes terlebih dahulu
-        $this->conn->exec("DELETE FROM decision_tree WHERE parent_node_id IS NULL"); // Hapus parent nodes
-
         // Hapus data dari c45_results
         $this->conn->exec("DELETE FROM c45_results");
 
-        // Aktifkan kembali pemeriksaan kunci asing
-        $this->conn->exec("SET FOREIGN_KEY_CHECKS=1");
     }
 
     // Method to get all data
@@ -250,61 +241,13 @@ class ATMData
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    public function getDecisionTree()
+    public function getC45Resultss()
     {
-        $query = "SELECT * FROM decision_tree ORDER BY node_id ASC";
+        $query = "SELECT attribute_name, attribute_value, filled_cases, empty_cases FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getAttributes()
-    {
-        $query = "SELECT * FROM attributes";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt;
-    }
 
-    public function getAttributeById($id)
-    {
-        $query = "SELECT * FROM attributes WHERE id = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $id);
-        $stmt->execute();
-        return $stmt;
-    }
-
-    public function addAttribute($name, $operator, $value, $classification)
-    {
-        $query = "INSERT INTO attributes (name, operator, value, classification) VALUES (:name, :operator, :value, :classification)";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':operator', $operator);
-        $stmt->bindParam(':value', $value);
-        $stmt->bindParam(':classification', $classification);
-        return $stmt->execute();
-    }
-
-    public function updateAttribute($id, $name, $operator, $value, $classification)
-    {
-        $query = "UPDATE attributes SET name = :name, operator = :operator, value = :value, classification = :classification WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':operator', $operator);
-        $stmt->bindParam(':value', $value);
-        $stmt->bindParam(':classification', $classification);
-        $stmt->bindParam(':id', $id);
-        return $stmt->execute();
-    }
-
-    public function deleteAttribute($id)
-    {
-        $query = "DELETE FROM attributes WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        return $stmt->execute();
-    }
 }
-?>

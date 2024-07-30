@@ -18,4 +18,3 @@ $_SESSION['kfold_result'] = $kfold_result;
 // Redirect to result page
 header('Location: ../views/decision_tree/kfold_result.php');
 exit();
-?>

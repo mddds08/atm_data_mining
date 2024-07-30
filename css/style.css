@@ -175,32 +175,66 @@ body {
   color: #555;
 }
 /* Styles for decision tree */
-.link {
-  fill: none;
-  stroke: #555;
-  stroke-width: 2px;
+
+#decisionTree {
+  /* border: 1px solid #ccc; */
+  padding: 10px;
 }
 
-.node circle {
-  fill: #999;
-  stroke: steelblue;
-  stroke-width: 3px;
+.tree {
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: nowrap;
+  padding: 10px;
+  max-height: 1500px; /* Adjust this to fit your needs */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
 }
 
-.node text {
-  font: 12px sans-serif;
+.tree ul {
+  list-style-type: none;
+  padding-left: 20px;
+  position: relative;
 }
-.header-logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 10px;
+
+.tree li {
+  margin: 5px 0;
+  padding-left: 20px;
+  position: relative;
 }
-.header-title {
-  display: flex;
-  align-items: center;
+
+.tree li::before,
+.tree li::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  border-left: 1px solid #000;
 }
-#decision-tree {
-  width: 100%;
-  height: 500px;
-  margin-top: 20px;
+
+.tree li::before {
+  top: 0;
+  height: 100%;
+}
+
+.tree li::after {
+  top: 50%;
+  width: 10px;
+  height: 0;
+  border-top: 1px solid #000;
+}
+
+.tree li > div {
+  display: inline-block;
+  padding: 10px 20px; /* Increase padding for better readability */
+  border-radius: 5px;
+  background-color: #fff;
+  border: 1px solid #000;
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+}
+
+.tree li > div:hover {
+  background-color: #e0e0e0;
 }

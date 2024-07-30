@@ -4,62 +4,15 @@ session_start();
 include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';
+require '../../controllers/DecisionTreeController.php';
 
-// Instantiate database and product object
 $database = new Database();
 $db = $database->getConnection();
 
-// Initialize object
 $atmData = new ATMData($db);
 
-// Get C4.5 results from model
 $c45_results = $atmData->getC45Results();
-
-// Get decision tree from model
-$decision_tree = $atmData->getDecisionTree();
-
-// Function to build tree structure from flat data
-function buildTree($flatData)
-{
-    $tree = [];
-    $indexed = [];
-
-    foreach ($flatData as $item) {
-        $item['children'] = [];
-        $indexed[$item['node_id']] = $item;
-    }
-
-    foreach ($indexed as $item) {
-        if ($item['parent_node_id'] === null) {
-            $tree[] = &$indexed[$item['node_id']];
-        } else {
-            $indexed[$item['parent_node_id']]['children'][] = &$indexed[$item['node_id']];
-        }
-    }
-
-    return $tree;
-}
-
-// Function to render tree
-function renderTree($node)
-{
-    echo '<li>';
-    echo "<strong>Attribute:</strong> " . htmlspecialchars($node['attribute_name']);
-    if ($node['is_leaf']) {
-        echo " <strong>Class:</strong> " . htmlspecialchars($node['class_label']);
-    }
-    if (!empty($node['children'])) {
-        echo '<ul>';
-        foreach ($node['children'] as $child) {
-            renderTree($child);
-        }
-        echo '</ul>';
-    }
-    echo '</li>';
-}
-
-// Build tree structure
-$tree = buildTree($decision_tree);
+$treeData = getDecisionTree();
 
 function formatEntropy($value)
 {
@@ -134,7 +87,7 @@ function formatEntropy($value)
                                 <td><?php echo htmlspecialchars($result['total_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['filled_cases']); ?></td>
                                 <td><?php echo htmlspecialchars($result['empty_cases']); ?></td>
-                                <td><?php echo (number_format($result['entropy'], 1) == 1.0) ? 1 : number_format($result['entropy'], 1); ?>
+                                <td><?php echo (number_format($result['entropy'], 1) == 1.00) ? 1 : number_format($result['entropy'], 1); ?>
                                 </td>
                                 <td></td>
                             </tr>
@@ -142,7 +95,6 @@ function formatEntropy($value)
                     </tbody>
                 </table>
                 <?php
-                // Menghitung akurasi
                 $total_cases = array_sum(array_column($c45_results, 'total_cases'));
                 $correct_cases = array_sum(array_column($c45_results, 'filled_cases'));
                 $accuracy = ($correct_cases / $total_cases) * 100;
@@ -156,60 +108,14 @@ function formatEntropy($value)
                     </div>
                 </div>
                 <br>
-                <br>
-                <h3>Aturan dari Pohon Keputusan</h3>
-                <ul class="list-group">
-                    <li class="list-group-item">Jika level saldo = rendah maka ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC SUNGGUMINASA maka ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC TAMALANREA maka
-                        ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC TAKALAR maka
-                        ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC PANGKEP maka
-                        ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC MAROS maka ISI
-                    </li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC JENEPONTO maka
-                        ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC PANAKKUKANG
-                        maka ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi
-                        atm = KC MAKASSAR
-                        SOMBA_OPU maka ISI</li>
-                    <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = sedang maka ISI</li>
-                    <li class="list-group-item">Jika level saldo = tinggi <b>AND</b> jarak tempuh = dekat maka TIDAK ISI
-                    </li>
-                    <li class="list-group-item">Jika level saldo = tinggi <b>AND</b> jarak tempuh = jauh maka ISI</li>
-                </ul>
-                <br>
-                <h3>Pohon Keputusan</h3>
-                <ul id="decision-tree" class="mt-3">
-                    <?php
-                    if (!empty($tree)) {
-                        foreach ($tree as $rootNode) {
-                            renderTree($rootNode);
-                        }
-                    }
-                    ?>
-                </ul>
-                <button class="btn btn-danger btn-lg btn-block" data-toggle="modal" data-target="#confirmDeleteModal" <?php if (empty($tree))
-                    echo 'disabled'; ?>>
+                <button class="btn btn-danger btn-lg btn-block" data-toggle="modal" data-target="#confirmDeleteModal">
                     Bersihkan Hasil C4.5
                 </button>
-                <!-- Tombol Ekspor -->
                 <form action="../../controllers/export_c45.php" method="post" class="mt-4">
                     <button type="submit" class="btn btn-success btn-lg btn-block">
                         <i class="fas fa-file-excel px-3"></i>Ekspor Hasil C4.5 ke Excel
                     </button>
                 </form>
-                <!-- Modal -->
                 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog"
                     aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -236,10 +142,40 @@ function formatEntropy($value)
             <?php else: ?>
                 <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
             <?php endif; ?>
-
+        </div>
+    </div>
+    <div class="card mt-5">
+        <div class="card-body">
+            <h5 class="card-title">Visualisasi Pohon Keputusan</h5>
+            <div class="tree">
+                <div id="decisionTree"></div>
+            </div>
         </div>
     </div>
 </div>
+<script>
+    var treeData = <?php echo json_encode($treeData); ?>;
+
+    function renderTree(node) {
+        if (typeof node !== 'object') {
+            return '<li><div>' + node + '</div></li>';
+        }
+
+        let html = '<ul>';
+        for (let key in node) {
+            if (node.hasOwnProperty(key)) {
+                html += '<li><div>' + key + '</div>';
+                html += renderTree(node[key]);
+                html += '</li>';
+            }
+        }
+        html += '</ul>';
+        return html;
+    }
+
+    document.getElementById('decisionTree').innerHTML = renderTree(treeData);
+
+</script>
 <?php
 include __DIR__ . '/../partials/footer.php';
 ?>

@@ -1,18 +1,4 @@
 <?php
-session_start();
-
-require '../config/database.php';
-require '../models/atmData.php';
-
-// Set response header to JSON
-header('Content-Type: application/json');
-
-// Instantiate database and model object
-$database = new Database();
-$db = $database->getConnection();
-$atmData = new ATMData($db);
-
-// Define rules as per your decision tree
 function defineRules($data)
 {
     $rules = [];
@@ -36,6 +22,7 @@ function defineRules($data)
         'KC PANAKKUKANG',
         'KC MAKASSAR SOMBA_OPU'
     ];
+
     foreach ($locations as $location) {
         $rules[] = [
             'conditions' => [
@@ -71,36 +58,45 @@ function defineRules($data)
             'level_saldo' => 'tinggi',
             'jarak_tempuh' => 'jauh'
         ],
-        'result' => 'Isi'
+        'result' => 'Tidak Isi'
     ];
 
     return $rules;
 }
 
-function buildTreeForGoogleCharts($rules)
+function buildTreeFromRules($rules)
 {
-    $tree = [['Condition', 'Result']];
+    $tree = [];
 
     foreach ($rules as $rule) {
-        $conditions = [];
+        $current = &$tree;
+
         foreach ($rule['conditions'] as $key => $value) {
-            $conditions[] = $key . '=' . $value;
+            if (!isset($current[$key])) {
+                $current[$key] = [];
+            }
+            if (!isset($current[$key][$value])) {
+                $current[$key][$value] = [];
+            }
+            $current = &$current[$key][$value];
         }
-        $path = implode(' -> ', $conditions);
-        $tree[] = [$path, $rule['result']];
+        $current['result'] = $rule['result'];
     }
 
     return $tree;
 }
 
-// Fetch C4.5 results from model
-$results = $atmData->getC45Results();
+function getDecisionTree()
+{
+    global $atmData;
 
-if (empty($results)) {
-    echo json_encode(['error' => 'No data available for C4.5 results']);
-} else {
-    $rules = defineRules($results);
-    $tree = buildTreeForGoogleCharts($rules);
-    echo json_encode($tree);
+    $results = $atmData->getC45Results();
+
+    if (empty($results)) {
+        return ['error' => 'Belum ditemukan Data Hasil C4.5'];
+    } else {
+        $rules = defineRules($results);
+        $tree = buildTreeFromRules($rules);
+        return $tree;
+    }
 }
-?>
