@@ -181,14 +181,14 @@ class ATMData
     {
         $query = "SELECT lokasi_atm, jarak_tempuh, level_saldo,
                   CASE
-                    WHEN level_saldo < 30 THEN 'Rendah'
-                    WHEN level_saldo BETWEEN 30 AND 60 THEN 'Sedang'
+                    WHEN level_saldo < 31 THEN 'Rendah'
+                    WHEN level_saldo BETWEEN 31 AND 60 THEN 'Sedang'
                     WHEN level_saldo > 60 THEN 'Tinggi'
                   END AS klasifikasi_saldo,
                   CASE
-                    WHEN jarak_tempuh < 30 THEN 'Dekat'
-                    WHEN jarak_tempuh BETWEEN 30 AND 60 THEN 'Sedang'
-                    WHEN jarak_tempuh > 60 THEN 'Jauh'
+                    WHEN jarak_tempuh < 31 THEN 'Dekat'
+                    WHEN jarak_tempuh BETWEEN 31 AND 50 THEN 'Sedang'
+                    WHEN jarak_tempuh > 50 THEN 'Jauh'
                   END AS klasifikasi_jarak
                   FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);

@@ -13,13 +13,14 @@ $atmData = new ATMData($db);
 
 $c45_results = $atmData->getC45Results();
 $treeData = getDecisionTree();
-
+$rules = defineRules($c45_results);
+$result = null;
 function formatEntropy($value)
 {
     return $value == 1 ? '1.0' : number_format($value, 3);
 }
-
 ?>
+
 <div class="container mt-5">
     <div class="card">
         <div class="card-body">
@@ -139,6 +140,51 @@ function formatEntropy($value)
                         </div>
                     </div>
                 </div>
+                <br>
+                <hr>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Form Prediksi</h5>
+                        <form id="predictionForm">
+                            <div class="form-group">
+                                <label for="level_saldo">Level Saldo</label>
+                                <select id="level_saldo" name="level_saldo" class="form-control">
+                                    <option value="rendah">Rendah</option>
+                                    <option value="sedang">Sedang</option>
+                                    <option value="tinggi">Tinggi</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="jarak_tempuh">Jarak Tempuh</label>
+                                <select id="jarak_tempuh" name="jarak_tempuh" class="form-control">
+                                    <option value="dekat">Dekat</option>
+                                    <option value="sedang">Sedang</option>
+                                    <option value="jauh">Jauh</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="lokasi_atm">Lokasi ATM</label>
+                                <select id="lokasi_atm" name="lokasi_atm" class="form-control">
+                                    <option value="KC SUNGGUMINASA">KC SUNGGUMINASA</option>
+                                    <option value="KC TAMALANREA">KC TAMALANREA</option>
+                                    <option value="KC TAKALAR">KC TAKALAR</option>
+                                    <option value="KC PANGKEP">KC PANGKEP</option>
+                                    <option value="KC MAROS">KC MAROS</option>
+                                    <option value="KC JENEPONTO">KC JENEPONTO</option>
+                                    <option value="KC PANAKKUKANG">KC PANAKKUKANG</option>
+                                    <option value="KC MAKASSAR SOMBA_OPU">KC MAKASSAR SOMBA_OPU</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Prediksi</button>
+                        </form>
+                        <?php if ($result !== null): ?>
+                            <div class="alert alert-info mt-3">
+                                <div id="predictionResult"></div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             <?php else: ?>
                 <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
             <?php endif; ?>
@@ -154,27 +200,57 @@ function formatEntropy($value)
     </div>
 </div>
 <script>
-    var treeData = <?php echo json_encode($treeData); ?>;
+    $(document).ready(function () {
+        $('#predictionForm').submit(function (event) {
+            event.preventDefault();
+            const formData = $(this).serializeArray();
+            const input = {};
+            formData.forEach(item => {
+                input[item.name] = item.value;
+            });
 
-    function renderTree(node) {
-        if (typeof node !== 'object') {
-            return '<li><div>' + node + '</div></li>';
-        }
+            const rules = <?php echo json_encode($rules); ?>;
+            const result = predict(rules, input);
+            $('#predictionResult').html('<strong>HASIL PREDIKSI : ' + result + '</strong>');
+        });
 
-        let html = '<ul>';
-        for (let key in node) {
-            if (node.hasOwnProperty(key)) {
-                html += '<li><div>' + key + '</div>';
-                html += renderTree(node[key]);
-                html += '</li>';
+        function predict(rules, input) {
+            for (let i = 0; i < rules.length; i++) {
+                let rule = rules[i];
+                let match = true;
+                for (let key in rule.conditions) {
+                    if (rule.conditions[key] !== input[key]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    return rule.result;
+                }
             }
+            return 'TIDAK ISI';
         }
-        html += '</ul>';
-        return html;
-    }
 
-    document.getElementById('decisionTree').innerHTML = renderTree(treeData);
+        function renderTree(node) {
+            if (typeof node !== 'object') {
+                return '<li><div>' + node + '</div></li>';
+            }
 
+            let html = '<ul>';
+            for (let key in node) {
+                if (node.hasOwnProperty(key)) {
+                    html += '<li><div>' + key + '</div>';
+                    html += renderTree(node[key]);
+                    html += '</li>';
+                }
+            }
+            html += '</ul>';
+            return html;
+        }
+
+        const treeData = <?php echo json_encode($treeData); ?>;
+        document.getElementById('decisionTree').innerHTML = renderTree(treeData);
+    });
 </script>
 <?php
 include __DIR__ . '/../partials/footer.php';

@@ -1,4 +1,9 @@
 <?php
+
+// Instantiate database and model object
+$database = new Database();
+$db = $database->getConnection();
+$atmData = new ATMData($db);
 function defineRules($data)
 {
     $rules = [];
@@ -100,3 +105,34 @@ function getDecisionTree()
         return $tree;
     }
 }
+function predict($rules, $input)
+{
+    foreach ($rules as $rule) {
+        $match = true;
+        foreach ($rule['conditions'] as $key => $value) {
+            if ($input[$key] !== $value) {
+                $match = false;
+                break;
+            }
+        }
+        if ($match) {
+            return $rule['result'];
+        }
+    }
+    return 'Tidak Diketahui';
+}
+
+$results = $atmData->getC45Results();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = [
+        'level_saldo' => $_POST['level_saldo'],
+        'jarak_tempuh' => $_POST['jarak_tempuh'],
+        'lokasi_atm' => $_POST['lokasi_atm']
+    ];
+    $rules = defineRules($results);
+    $prediction = predict($rules, $input);
+    echo json_encode(['prediction' => $prediction]);
+    exit;
+}
+

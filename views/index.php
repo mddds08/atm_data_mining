@@ -3,13 +3,6 @@ session_start();
 include __DIR__ . '/partials/header.php';
 require '../config/database.php';
 require '../models/atmData.php';
-// Display notifications
-if (isset($_SESSION['notifications'])) {
-    foreach ($_SESSION['notifications'] as $notification) {
-        echo "<div class='alert alert-warning'>$notification</div>";
-    }
-    unset($_SESSION['notifications']);
-}
 
 // Instantiate database and product object
 $database = new Database();

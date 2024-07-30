@@ -13,8 +13,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    
+
 
     <link rel="shortcut icon" href="/atm_data_mining/assets/icons/icon.png" />
 </head>
@@ -40,6 +41,10 @@
                             <li class="nav-item">
                                 <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/dataset.php"><i
                                         class="fas fa-database pr-1"></i> Dataset</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/nilai_atribut.php"><i
+                                        class="fas fa-list-alt pr-1"></i> Nilai Atribut</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/klasifikasi.php"><i

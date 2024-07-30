@@ -88,7 +88,7 @@ function calculateGain($total_cases, $attribute_cases)
 
 function categorizeLevelSaldo($level_saldo)
 {
-    if ($level_saldo < 30) {
+    if ($level_saldo < 31) {
         return 'Rendah';
     } elseif ($level_saldo <= 60) {
         return 'Sedang';
@@ -99,9 +99,9 @@ function categorizeLevelSaldo($level_saldo)
 
 function categorizeJarakTempuh($jarak_tempuh)
 {
-    if ($jarak_tempuh < 30) {
+    if ($jarak_tempuh < 31) {
         return 'Dekat';
-    } elseif ($jarak_tempuh <= 60) {
+    } elseif ($jarak_tempuh <= 50) {
         return 'Sedang';
     } else {
         return 'Jauh';
