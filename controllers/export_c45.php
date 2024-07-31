@@ -5,34 +5,37 @@ require '../vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-// Instantiate database
+// Inisialisasi database
 $database = new Database();
 $db = $database->getConnection();
 
-// Get C4.5 results from database
+// Ambil hasil C4.5 dari database
 $stmt = $db->prepare("SELECT * FROM c45_results");
 $stmt->execute();
 $c45_results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Create a new Spreadsheet object
+// Buat objek Spreadsheet baru
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
 
-// Set spreadsheet headers
+// Set header spreadsheet
 $headers = ['Node', 'Attribute', 'Value', 'Total', 'Isi', 'Tidak Isi', 'Entropy', 'Gain'];
-$columns = range('A', 'H'); // Define the columns A to H
+$columns = range('A', 'H'); // Definisikan kolom dari A hingga H
 foreach ($headers as $index => $header) {
     $sheet->setCellValue("{$columns[$index]}1", $header);
 }
 
-// Add data to spreadsheet
+// Tambahkan data ke spreadsheet
 $rowIndex = 2;
 $node = 1;
 $lastAttribute = '';
+$totalEntropyCell = '';
+$gainData = [];
+$attributeData = [];
 
 foreach ($c45_results as $result) {
     if ($result['attribute_name'] !== $lastAttribute) {
-        // Add header row for each attribute
+        // Tambahkan baris header untuk setiap atribut
         $total = array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
             return $r['attribute_name'] == $result['attribute_name'];
         }), 'total_cases'));
@@ -45,59 +48,54 @@ foreach ($c45_results as $result) {
             return $r['attribute_name'] == $result['attribute_name'];
         }), 'empty_cases'));
 
-        $entropy = array_sum(array_column(array_filter($c45_results, function ($r) use ($result) {
-            return $r['attribute_name'] == $result['attribute_name'];
-        }), 'entropy')) / count(array_filter($c45_results, function ($r) use ($result) {
-            return $r['attribute_name'] == $result['attribute_name'];
-        }));
-
+        $entropyFormula = "=IF(D{$rowIndex}=0,0,-(IF(E{$rowIndex}=0,0,(E{$rowIndex}/D{$rowIndex})*LOG(E{$rowIndex}/D{$rowIndex},2)) + IF(F{$rowIndex}=0,0,(F{$rowIndex}/D{$rowIndex})*LOG(F{$rowIndex}/D{$rowIndex},2))))";
         $sheet->setCellValue("A{$rowIndex}", $node);
         $sheet->setCellValue("B{$rowIndex}", $result['attribute_name']);
         $sheet->setCellValue("D{$rowIndex}", $total);
         $sheet->setCellValue("E{$rowIndex}", $isi);
         $sheet->setCellValue("F{$rowIndex}", $tidakIsi);
-        $sheet->setCellValue("G{$rowIndex}", number_format($entropy, 3));
-        $sheet->setCellValue("H{$rowIndex}", number_format($result['gain'], 3));
+        $sheet->setCellValue("G{$rowIndex}", $entropyFormula);
+        $sheet->setCellValue("H{$rowIndex}", ""); // Kosongkan gain untuk saat ini
+
+        $totalEntropyCell = "G{$rowIndex}"; // Simpan entropi total untuk perhitungan gain
+        $gainData[$result['attribute_name']] = ['row' => $rowIndex, 'total' => $total];
+        $attributeData[$result['attribute_name']] = [];
         $rowIndex++;
         $node++;
         $lastAttribute = $result['attribute_name'];
     }
 
-    // Set data row values
+    // Set data nilai atribut
     $sheet->setCellValue("B{$rowIndex}", $result['attribute_value']);
     $sheet->setCellValue("D{$rowIndex}", $result['total_cases']);
     $sheet->setCellValue("E{$rowIndex}", $result['filled_cases']);
     $sheet->setCellValue("F{$rowIndex}", $result['empty_cases']);
+    $entropyFormula = "=IF(D{$rowIndex}=0,0,-(IF(E{$rowIndex}=0,0,(E{$rowIndex}/D{$rowIndex})*LOG(E{$rowIndex}/D{$rowIndex},2)) + IF(F{$rowIndex}=0,0,(F{$rowIndex}/D{$rowIndex})*LOG(F{$rowIndex}/D{$rowIndex},2))))";
+    $sheet->setCellValue("G{$rowIndex}", $entropyFormula);
+    $attributeData[$lastAttribute][] = $rowIndex;
     $rowIndex++;
 }
 
-// Add entropy formula
-for ($i = 2; $i < $rowIndex; $i++) {
-    $totalCasesCell = "D{$i}";
-    $filledCasesCell = "E{$i}";
-    $emptyCasesCell = "F{$i}";
+// Hitung gain untuk setiap atribut
+foreach ($gainData as $attribute => $data) {
+    $totalCases = $data['total'];
+    $weightedEntropyParts = [];
+    foreach ($attributeData[$attribute] as $row) {
+        $weightedEntropyParts[] = "(D{$row}/$totalCases)*G{$row}";
+    }
+    $weightedEntropyFormula = implode("+", $weightedEntropyParts);
 
-    $entropyFormula = "=IF($totalCasesCell=0,0,-((IF($filledCasesCell=0,0,($filledCasesCell/$totalCasesCell)*LOG($filledCasesCell/$totalCasesCell,2)) + IF($emptyCasesCell=0,0,($emptyCasesCell/$totalCasesCell)*LOG($emptyCasesCell/$totalCasesCell,2)))))";
-    $sheet->setCellValue("G{$i}", $entropyFormula);
-    // $sheet->setCellValue("=SUM($entropyFormula", "G{$i})");
+    // Gain formula for the main attribute row
+    $gainFormula = "={$totalEntropyCell} - ({$weightedEntropyFormula})";
+    $sheet->setCellValue("H{$data['row']}", $gainFormula);
 }
 
-// Add gain formula
-// Find the total entropy for the dataset
-$totalEntropy = number_format(array_sum(array_column($c45_results, 'entropy')) / count($c45_results), 3);
-
-for ($i = 2; $i < $rowIndex; $i++) {
-    $entropyCell = "G{$i}";
-    $gainFormula = "$totalEntropy - $entropyCell";
-    $sheet->setCellValue("H{$i}", $gainFormula);
-}
-
-// Write spreadsheet to a file
+// Tulis spreadsheet ke file
 $writer = new Xlsx($spreadsheet);
 $filename = 'DataHasilC45_' . date('Ymd_His') . '.xlsx';
 $filepath = __DIR__ . '/../exports/' . $filename;
 
-// Check if 'exports' directory exists, if not, create it
+// Periksa apakah direktori 'exports' ada, jika tidak, buatlah
 if (!file_exists(__DIR__ . '/../exports')) {
     mkdir(__DIR__ . '/../exports', 0777, true);
 }
@@ -105,17 +103,17 @@ if (!file_exists(__DIR__ . '/../exports')) {
 try {
     $writer->save($filepath);
 
-    // Redirect to the file for download
+    // Arahkan ke file untuk diunduh
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
 
     readfile($filepath);
 
-    // Delete the file after download
+    // Hapus file setelah diunduh
     unlink($filepath);
 } catch (Exception $e) {
-    // Error handling
+    // Penanganan kesalahan
     echo 'Error writing file: ', $e->getMessage();
     exit();
 }
