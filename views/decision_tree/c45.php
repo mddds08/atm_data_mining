@@ -142,7 +142,7 @@ function formatEntropy($value)
                 </div>
                 <br>
                 <hr>
-                
+
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Form Prediksi</h5>
@@ -185,18 +185,57 @@ function formatEntropy($value)
                         <?php endif; ?>
                     </div>
                 </div>
-            <?php else: ?>
-                <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
-            <?php endif; ?>
-        </div>
-    </div>
-    <div class="card mt-5">
-        <div class="card-body">
-            <h5 class="card-title">Visualisasi Pohon Keputusan</h5>
-            <div class="tree">
-                <div id="decisionTree"></div>
+                <div class="card mt-5">
+                    <div class="card-body">
+                        <h3 class="card-title">Aturan dari Pohon Keputusan</h3>
+                        <ul class="list-group">
+                            <li class="list-group-item">Jika level saldo = rendah maka ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC SUNGGUMINASA maka ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC TAMALANREA maka
+                                ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC TAKALAR maka
+                                ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC PANGKEP maka
+                                ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC MAROS maka ISI
+                            </li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC JENEPONTO maka
+                                ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC PANAKKUKANG
+                                maka ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
+                                lokasi
+                                atm = KC MAKASSAR
+                                SOMBA_OPU maka ISI</li>
+                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = sedang maka ISI
+                            </li>
+                            <li class="list-group-item">Jika level saldo = tinggi <b>AND</b> jarak tempuh = dekat maka TIDAK
+                                ISI
+                            </li>
+                            <li class="list-group-item">Jika level saldo = tinggi <b>AND</b> jarak tempuh = jauh maka ISI
+                            </li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="mt-3">Anda Belum Melakukan Proses Klasifikasi.</p>
+                <?php endif; ?>
             </div>
         </div>
+
     </div>
 </div>
 <script>

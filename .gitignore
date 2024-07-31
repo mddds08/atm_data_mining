@@ -1,3 +1,5 @@
 controllers/protect.php
+controllers/NilaiAtributController.php
+views/decision_tree/nilai_atribut.php
 .htaccess
 node_modules
