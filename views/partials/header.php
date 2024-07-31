@@ -43,10 +43,6 @@
                                         class="fas fa-database pr-1"></i> Dataset</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/nilai_atribut.php"><i
-                                        class="fas fa-list-alt pr-1"></i> Nilai Atribut</a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link px-3" href="/atm_data_mining/views/decision_tree/klasifikasi.php"><i
                                         class="fas fa-cogs pr-1"></i> Proses Klasifikasi</a>
                             </li>
