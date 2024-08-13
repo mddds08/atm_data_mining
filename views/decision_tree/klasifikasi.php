@@ -41,8 +41,8 @@ if (isset($_SESSION['message'])) {
                             <th>Lokasi ATM</th>
                             <th>Jarak Tempuh (km)</th>
                             <th>Level Saldo (%)</th>
-                            <th>Klasifikasi Saldo</th>
-                            <th>Klasifikasi Jarak</th>
+                            <th>Klasifikasi Jarak Tempuh</th>
+                            <th>Klasifikasi Level Saldo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,8 +51,8 @@ if (isset($_SESSION['message'])) {
                                 <td><?php echo htmlspecialchars($row['lokasi_atm']); ?></td>
                                 <td><?php echo htmlspecialchars($row['jarak_tempuh']); ?></td>
                                 <td><?php echo htmlspecialchars($row['level_saldo']); ?></td>
-                                <td><?php echo htmlspecialchars($row['klasifikasi_saldo']); ?></td>
                                 <td><?php echo htmlspecialchars($row['klasifikasi_jarak']); ?></td>
+                                <td><?php echo htmlspecialchars($row['klasifikasi_saldo']); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

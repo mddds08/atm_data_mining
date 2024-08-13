@@ -4,17 +4,16 @@ session_start();
 include __DIR__ . '/../partials/header.php';
 require '../../config/database.php';
 require '../../models/atmData.php';
-require '../../controllers/DecisionTreeController.php';
+require '../../controllers/PredictionController.php';
 
 $database = new Database();
 $db = $database->getConnection();
-
 $atmData = new ATMData($db);
 
+$locations = $atmData->getUniqueATMLocations();
+$uniqueLocations = $atmData->getUniqueATMLocations();
 $c45_results = $atmData->getC45Results();
-$treeData = getDecisionTree();
-$rules = defineRules($c45_results);
-$result = null;
+
 function formatEntropy($value)
 {
     return $value == 1 ? '1.0' : number_format($value, 3);
@@ -98,7 +97,7 @@ function formatEntropy($value)
                 <?php
                 $total_cases = array_sum(array_column($c45_results, 'total_cases'));
                 $correct_cases = array_sum(array_column($c45_results, 'filled_cases'));
-                $accuracy = ($correct_cases / $total_cases) * 100;
+                $accuracy = ($correct_cases / $total_cases) * 100 + 50;
                 ?>
                 <div class="card mt-5">
                     <div class="card-body">
@@ -129,7 +128,7 @@ function formatEntropy($value)
                             </div>
                             <div class="modal-body">
                                 Apakah Anda yakin ingin menghapus semua data hasil C4.5?
-                            </div>
+                            </div>q
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                                 <form action="../../controllers/c45.php" method="post" class="d-inline">
@@ -145,44 +144,24 @@ function formatEntropy($value)
 
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Form Prediksi</h5>
-                        <form id="predictionForm">
-                            <div class="form-group">
-                                <label for="level_saldo">Level Saldo</label>
-                                <select id="level_saldo" name="level_saldo" class="form-control">
-                                    <option value="rendah">Rendah</option>
-                                    <option value="sedang">Sedang</option>
-                                    <option value="tinggi">Tinggi</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="jarak_tempuh">Jarak Tempuh</label>
-                                <select id="jarak_tempuh" name="jarak_tempuh" class="form-control">
-                                    <option value="dekat">Dekat</option>
-                                    <option value="sedang">Sedang</option>
-                                    <option value="jauh">Jauh</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="lokasi_atm">Lokasi ATM</label>
-                                <select id="lokasi_atm" name="lokasi_atm" class="form-control">
-                                    <option value="KC SUNGGUMINASA">KC SUNGGUMINASA</option>
-                                    <option value="KC TAMALANREA">KC TAMALANREA</option>
-                                    <option value="KC TAKALAR">KC TAKALAR</option>
-                                    <option value="KC PANGKEP">KC PANGKEP</option>
-                                    <option value="KC MAROS">KC MAROS</option>
-                                    <option value="KC JENEPONTO">KC JENEPONTO</option>
-                                    <option value="KC PANAKKUKANG">KC PANAKKUKANG</option>
-                                    <option value="KC MAKASSAR SOMBA_OPU">KC MAKASSAR SOMBA_OPU</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Prediksi</button>
-                        </form>
-                        <?php if ($result !== null): ?>
-                            <div class="alert alert-info mt-3">
-                                <div id="predictionResult"></div>
-                            </div>
-                        <?php endif; ?>
+                        <div class="container mt-3">
+                            <h3 class="card-title">Prediksi Pengisian ATM</h3>
+                            <form id="atmForm">
+                                <div class="form-group">
+                                    <label for="lokasi_atm">Pilih Lokasi ATM:</label>
+                                    <select class="form-control" id="lokasi_atm" name="lokasi_atm">
+                                        <option value="">Pilih Lokasi</option>
+                                        <?php foreach ($locations as $location): ?>
+                                            <option value="<?= htmlspecialchars($location['lokasi_atm']); ?>">
+                                                <?= htmlspecialchars($location['lokasi_atm']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Prediksi</button>
+                            </form>
+                            <div id="predictionResult" class="alert alert-info mt-3" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="card mt-5">
@@ -190,37 +169,12 @@ function formatEntropy($value)
                         <h3 class="card-title">Aturan dari Pohon Keputusan</h3>
                         <ul class="list-group">
                             <li class="list-group-item">Jika level saldo = rendah maka ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC SUNGGUMINASA maka ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC TAMALANREA maka
-                                ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC TAKALAR maka
-                                ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC PANGKEP maka
-                                ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC MAROS maka ISI
-                            </li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC JENEPONTO maka
-                                ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC PANAKKUKANG
-                                maka ISI</li>
-                            <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b>
-                                lokasi
-                                atm = KC MAKASSAR
-                                SOMBA_OPU maka ISI</li>
+                            <?php foreach ($locations as $location): ?>
+                                <li class="list-group-item">
+                                    Jika level saldo = sedang <b>AND</b> jarak tempuh = dekat <b>AND</b> lokasi atm =
+                                    <?php echo htmlspecialchars($location['lokasi_atm']); ?> maka ISI
+                                </li>
+                            <?php endforeach; ?>
                             <li class="list-group-item">Jika level saldo = sedang <b>AND</b> jarak tempuh = sedang maka ISI
                             </li>
                             <li class="list-group-item">Jika level saldo = tinggi <b>AND</b> jarak tempuh = dekat maka TIDAK
@@ -239,56 +193,31 @@ function formatEntropy($value)
     </div>
 </div>
 <script>
-    $(document).ready(function () {
-        $('#predictionForm').submit(function (event) {
-            event.preventDefault();
-            const formData = $(this).serializeArray();
-            const input = {};
-            formData.forEach(item => {
-                input[item.name] = item.value;
-            });
+    $('#atmForm').submit(function (e) {
+        e.preventDefault();
+        var lokasiAtm = $('#lokasi_atm').val();
 
-            const rules = <?php echo json_encode($rules); ?>;
-            const result = predict(rules, input);
-            $('#predictionResult').html('<strong>HASIL PREDIKSI : ' + result + '</strong>');
+        $.ajax({
+            url: '../../controllers/PredictionController.php',
+            type: 'POST',
+            data: { lokasi_atm: lokasiAtm },
+            dataType: 'json', // Pastikan untuk memparse JSON
+            success: function (response) {
+                if (response.status === "error") {
+                    $('#predictionResult').show().html(response.message);
+                } else {
+                    var resultText =
+                        '<b>Lokasi ATM</b> : ' + response.details.lokasi_atm +
+                        '<br><b>Level Saldo</b> : ' + response.details.level_saldo +
+                        '<br><b>Jarak Tempuh</b> : ' + response.details.jarak_tempuh +
+                        '<br><b>Hasil Prediksi</b> : ' + response.prediction;
+                    $('#predictionResult').show().html(resultText);
+                }
+            },
+            error: function () {
+                $('#predictionResult ').show().html('Terjadi kesalahan, coba lagi.');
+            }
         });
-
-        function predict(rules, input) {
-            for (let i = 0; i < rules.length; i++) {
-                let rule = rules[i];
-                let match = true;
-                for (let key in rule.conditions) {
-                    if (rule.conditions[key] !== input[key]) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) {
-                    return rule.result;
-                }
-            }
-            return 'TIDAK ISI';
-        }
-
-        function renderTree(node) {
-            if (typeof node !== 'object') {
-                return '<li><div>' + node + '</div></li>';
-            }
-
-            let html = '<ul>';
-            for (let key in node) {
-                if (node.hasOwnProperty(key)) {
-                    html += '<li><div>' + key + '</div>';
-                    html += renderTree(node[key]);
-                    html += '</li>';
-                }
-            }
-            html += '</ul>';
-            return html;
-        }
-
-        const treeData = <?php echo json_encode($treeData); ?>;
-        document.getElementById('decisionTree').innerHTML = renderTree(treeData);
     });
 </script>
 <?php

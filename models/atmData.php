@@ -181,14 +181,12 @@ class ATMData
     {
         $query = "SELECT lokasi_atm, jarak_tempuh, level_saldo,
                   CASE
-                    WHEN level_saldo < 31 THEN 'Rendah'
-                    WHEN level_saldo BETWEEN 31 AND 60 THEN 'Sedang'
-                    WHEN level_saldo > 60 THEN 'Tinggi'
+                    WHEN level_saldo <= 39 THEN 'Rendah'
+                    WHEN level_saldo > 39 THEN 'Tinggi'
                   END AS klasifikasi_saldo,
                   CASE
-                    WHEN jarak_tempuh < 31 THEN 'Dekat'
-                    WHEN jarak_tempuh BETWEEN 31 AND 50 THEN 'Sedang'
-                    WHEN jarak_tempuh > 50 THEN 'Jauh'
+                    WHEN jarak_tempuh <= 10 THEN 'Dekat'
+                    WHEN jarak_tempuh > 10 THEN 'Jauh'
                   END AS klasifikasi_jarak
                   FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
@@ -248,6 +246,20 @@ class ATMData
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
+    public function getUniqueATMLocations()
+    {
+        $query = "SELECT DISTINCT lokasi_atm FROM atm_data ORDER BY lokasi_atm";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getDataByLocation($lokasi_atm)
+    {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE lokasi_atm = :lokasi_atm";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':lokasi_atm', $lokasi_atm);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
 }

@@ -88,10 +88,8 @@ function calculateGain($total_cases, $attribute_cases)
 
 function categorizeLevelSaldo($level_saldo)
 {
-    if ($level_saldo < 31) {
+    if ($level_saldo <= 39) {
         return 'Rendah';
-    } elseif ($level_saldo <= 60) {
-        return 'Sedang';
     } else {
         return 'Tinggi';
     }
@@ -99,10 +97,8 @@ function categorizeLevelSaldo($level_saldo)
 
 function categorizeJarakTempuh($jarak_tempuh)
 {
-    if ($jarak_tempuh < 31) {
+    if ($jarak_tempuh <= 10) {
         return 'Dekat';
-    } elseif ($jarak_tempuh <= 50) {
-        return 'Sedang';
     } else {
         return 'Jauh';
     }
@@ -183,91 +179,6 @@ $_SESSION['c45_result'] = [
     'total_entropy' => $total_entropy,
     'results' => $results,
 ];
-
-function createTree($data, $attributes = null)
-{
-    if (is_null($attributes)) {
-        $attributes = array_keys($data[0]);
-        $attributes = array_diff($attributes, ['status_isi']);
-    }
-
-    $total_cases = [
-        'isi' => count(array_filter($data, function ($row) {
-            return $row['status_isi'] == 1;
-        })),
-        'tidak_isi' => count(array_filter($data, function ($row) {
-            return $row['status_isi'] == 0;
-        }))
-    ];
-
-    $total_entropy = calculateEntropy($total_cases);
-
-    if ($total_entropy == 0) {
-        return [
-            'label' => $data[0]['status_isi']
-        ];
-    }
-
-    if (empty($attributes)) {
-        return [
-            'label' => $total_cases['isi'] >= $total_cases['tidak_isi'] ? 1 : 0
-        ];
-    }
-
-    $best_gain = -1;
-    $best_attribute = null;
-    $best_attribute_cases = null;
-
-    foreach ($attributes as $attribute) {
-        $attribute_cases = [];
-        foreach ($data as $row) {
-            $attr_value = $row[$attribute];
-            if (!isset($attribute_cases[$attr_value])) {
-                $attribute_cases[$attr_value] = ['isi' => 0, 'tidak_isi' => 0];
-            }
-            if ($row['status_isi'] == 1) {
-                $attribute_cases[$attr_value]['isi']++;
-            } else {
-                $attribute_cases[$attr_value]['tidak_isi']++;
-            }
-        }
-
-        $gain = calculateGain($total_cases, $attribute_cases);
-        if ($gain > $best_gain) {
-            $best_gain = $gain;
-            $best_attribute = $attribute;
-            $best_attribute_cases = $attribute_cases;
-        }
-    }
-
-    if ($best_gain == 0) {
-        return [
-            'label' => $total_cases['isi'] >= $total_cases['tidak_isi'] ? 1 : 0
-        ];
-    }
-
-    $tree = [
-        'attribute' => $best_attribute,
-        'nodes' => []
-    ];
-
-    foreach ($best_attribute_cases as $attr_value => $cases) {
-        $subset = array_filter($data, function ($row) use ($best_attribute, $attr_value) {
-            return $row[$best_attribute] == $attr_value;
-        });
-
-        $subset = array_values($subset);
-
-        $new_attributes = array_diff($attributes, [$best_attribute]);
-
-        $tree['nodes'][$attr_value] = createTree($subset, $new_attributes);
-    }
-
-    return $tree;
-}
-
-$decision_tree = createTree($data);
-$_SESSION['decision_tree'] = $decision_tree;
 
 header('Location: ../views/decision_tree/c45.php');
 
